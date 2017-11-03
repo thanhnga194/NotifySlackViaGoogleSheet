@@ -5,10 +5,12 @@
  * 10th May 2016
  * Purpose - send a slack payload to bot-database informing users of database update requirements
 **/
+
+var SLACK_URL = "https://hooks.slack.com/services/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"
+var HEADER_ROW_NUMBER = 4
+
 function ceta_db_column_edit(event){
   Logger.log("ceta_db_column_edit")
-
-
 
   // get this spread sheet
   var ceta_spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -30,7 +32,6 @@ function ceta_db_column_edit(event){
   // if (active_column != 14) return;
 
   // get the revision
-  var HEADER_ROW_NUMBER = 4
   var revision_range = ceta_sheet.getRange(HEADER_ROW_NUMBER, active_column);
   var revision_content = revision_range.getValue();
   Logger.log("revision_range = %s revision_content = %s", revision_range, revision_content)
@@ -45,16 +46,16 @@ function ceta_db_column_edit(event){
   if (db_changes_content == "") return;
 
   // The url to post to
-  var slack_url = "https://hooks.slack.com/services/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";
+
 
   // get the logged in user (we can only get email I thinks)
   var current_user = Session.getActiveUser().getEmail();
+  Logger.log("current_user = %s", current_user)
 
   //if its blank (why?)
   if (current_user == "") {
-
-  //at least put something in
-   current_user = "An unknown";
+    // at least put something in
+    current_user = "An unknown user";
   }
 
   // generate the payload text object
@@ -71,7 +72,7 @@ function ceta_db_column_edit(event){
   Logger.log("payload = %s", payload)
 
   //send that bugger
-  var response = UrlFetchApp.fetch(slack_url, options);
+  var response = UrlFetchApp.fetch(SLACK_URL, options);
 
   Logger.log("response = %s", response)
   //we could check for response, but who cares?
