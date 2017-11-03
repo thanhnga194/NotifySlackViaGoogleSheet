@@ -8,6 +8,9 @@
 
 var SLACK_URL = "https://hooks.slack.com/services/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"
 var HEADER_ROW_NUMBER = 4
+var COLUMN_CHANGE_DATA_DOC_LINKS = 7
+var COLUMN_CHANGE_DATA_ACTUAL_START = 12
+var COLUMN_CHANGE_DATA_ACTUAL_END = 13
 
 function ceta_db_column_edit(event){
   Logger.log("ceta_db_column_edit")
@@ -25,11 +28,19 @@ function ceta_db_column_edit(event){
   var active_column = active_cell.getColumn();
   Logger.log("active_cell = %s active_row = %s active_column = %s", active_cell, active_row, active_column)
 
-  //If header row then exit
-  // if (active_row < 2) return;
+  // If header row then exit
+  if (active_row <= HEADER_ROW_NUMBER) {
+    Logger.log("active_row <= HEADER_ROW_NUMBER")
+    return;
+  }
 
-  //if not the db column get out
-  // if (active_column != 14) return;
+  // if not the db column get out
+  if (active_column != COLUMN_CHANGE_DATA_DOC_LINKS &&
+      active_column != COLUMN_CHANGE_DATA_ACTUAL_START &&
+      active_column != COLUMN_CHANGE_DATA_ACTUAL_END) {
+    Logger.log("active_column != COLUMN_CHANGE_DATA_CHANGE")
+    return;
+  }
 
   // get the revision
   var revision_range = ceta_sheet.getRange(HEADER_ROW_NUMBER, active_column);
@@ -44,9 +55,6 @@ function ceta_db_column_edit(event){
 
   // if its nothing then lets not bother (they're probably deleting stuff)
   if (db_changes_content == "") return;
-
-  // The url to post to
-
 
   // get the logged in user (we can only get email I thinks)
   var current_user = Session.getActiveUser().getEmail();
