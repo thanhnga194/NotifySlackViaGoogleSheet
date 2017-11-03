@@ -89,9 +89,19 @@ function ceta_db_column_edit(event){
   // Actual End: 17/11/2017
   // Doc Links: <links>
   var title = Utilities.formatString("[%s %s - %s] %s (PIC: %s)", status, store_id, store, task_description, assigned_to)
-  var content = Utilities.formatString("%s: %s", revision_content, db_changes_content)
+  Logger.log("title = %s", title)
+
+  var content = ""
+  if (active_column == COLUMN_CHANGE_DATA_ACTUAL_START || active_column == COLUMN_CHANGE_DATA_ACTUAL_END) {
+    date = Utilities.formatDate(db_changes_content, "GMT+7", "dd/MM/yyyy");
+    content = Utilities.formatString("*%s*: %s", revision_content, date)
+  } else {
+    content = Utilities.formatString("*%s*: %s", revision_content, db_changes_content)
+  }
+  Logger.log("content = %s", content)
 
   var output = Utilities.formatString("%s \n %s", title, content)
+  Logger.log("output = %s", output)
 
   // generate the payload text object
   var payload = { "text" : current_user + " just updated:\n" + output };
