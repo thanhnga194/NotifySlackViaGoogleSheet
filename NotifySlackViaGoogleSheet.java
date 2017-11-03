@@ -5,7 +5,7 @@
 // CONFIG
 var SLACK_URL = "https://hooks.slack.com/services/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"
 var BOT_NAME = "Progress Tracker"
-var BOT_AVATAR = ":grand-opening:"
+var BOT_AVATAR = ":clock:"
 var ROW_HEADER = 4
 
 // COLUMN DATA CHANGE
