@@ -54,7 +54,10 @@ function ceta_db_column_edit(event){
   Logger.log("db_changes_range = %s db_changes_content = %s", db_changes_range, db_changes_content)
 
   // if its nothing then lets not bother (they're probably deleting stuff)
-  if (db_changes_content == "") return;
+  if (db_changes_content == "") {
+    Logger.log("db_changes_content == empty")
+    return;
+  }
 
   // get the logged in user (we can only get email I thinks)
   var current_user = Session.getActiveUser().getEmail();
