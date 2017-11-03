@@ -12,9 +12,11 @@ var COLUMN_CHANGE_DATA_ACTUAL_START = 12
 var COLUMN_CHANGE_DATA_ACTUAL_END = 13
 
 // COLUMN OUTPUT NAME
-var COLUMN_STORE = 1
+var COLUMN_STORE = 15
 var COLUMN_TASK_DESCRIPTION = 3
 var COLUMN_ASSIGNED_TO = 5
+var COLUMN_STATUS = 4
+var COLUMN_STORE_ID = 1
 
 function ceta_db_column_edit(event){
   Logger.log("ceta_db_column_edit with event = %s", event)
@@ -67,7 +69,7 @@ function ceta_db_column_edit(event){
   var current_user = Session.getActiveUser().getEmail();
   Logger.log("current_user = %s", current_user)
 
-  //if its blank (why?)
+  // check if can get current_user
   if (current_user == "") {
     // at least put something in
     current_user = "An unknown user";
@@ -75,22 +77,25 @@ function ceta_db_column_edit(event){
 
   // get value
   var store = ceta_sheet.getRange(active_row, COLUMN_STORE).getValue();
+  var store_id = ceta_sheet.getRange(active_row, COLUMN_STORE_ID).getValue()
   var task_description = ceta_sheet.getRange(active_row, COLUMN_TASK_DESCRIPTION).getValue();
-  var assigned_to = ceta_sheet.getRange(active_row, COLUMN_ASSIGNED_TO).getValue();
+  var assigned_to = ceta_sheet.getRange(active_row, COLUMN_ASSIGNED_TO).getValue()
+  var status = ceta_sheet.getRange(active_row, COLUMN_STATUS).getValue()
 
   // put value
   // Sample output of notification
-  // [1002] Tender Hand-over to SD (PIC: SD)
+  // [🏁1002 - <STORE NAME>] Tender Hand-over to SD (PIC: SD)
   // Actual Start: 17/11/2017
   // Actual End: 17/11/2017
   // Doc Links: <links>
-  var title = Utilities.formatString("[%s] %s (PIC: %s)", store, task_description, assigned_to)
+  var title = Utilities.formatString("[%s %s - %s] %s (PIC: %s)", status, store_id, store, task_description, assigned_to)
   var content = Utilities.formatString("%s: %s", revision_content, db_changes_content)
 
   var output = Utilities.formatString("%s \n %s", title, content)
 
   // generate the payload text object
-  var payload = { "text" : current_user + " just updated \n" + output };
+  var payload = { "text" : current_user + " just updated:\n" + output };
+  Logger.log("payload = %s", payload)
 
   //the URL payload
   var options = {
@@ -100,11 +105,7 @@ function ceta_db_column_edit(event){
      "muteHttpExceptions" : true
   };
 
-  Logger.log("payload = %s", payload)
-
-  //send that bugger
+  // send to Slack
   var response = UrlFetchApp.fetch(SLACK_URL, options);
-
   Logger.log("response = %s", response)
-  //we could check for response, but who cares?
 }
