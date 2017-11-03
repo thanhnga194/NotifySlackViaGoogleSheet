@@ -73,8 +73,24 @@ function ceta_db_column_edit(event){
     current_user = "An unknown user";
   }
 
+  // get value
+  var store = ceta_sheet.getRange(active_row, COLUMN_STORE).getValue();
+  var task_description = ceta_sheet.getRange(active_row, COLUMN_TASK_DESCRIPTION).getValue();
+  var assigned_to = ceta_sheet.getRange(active_row, COLUMN_ASSIGNED_TO).getValue();
+
+  // put value
+  // Sample output of notification
+  // [1002] Tender Hand-over to SD (PIC: SD)
+  // Actual Start: 17/11/2017
+  // Actual End: 17/11/2017
+  // Doc Links: <links>
+  var title = Utilities.formatString("[%s] %s (PIC: %s)", store, task_description, assigned_to)
+  var content = Utilities.formatString("%s: %s", revision_content, db_changes_content)
+
+  var output = Utilities.formatString("%s \n %s", title, content)
+
   // generate the payload text object
-  var payload = { "text" : current_user + " has just entered text into the db field for revision " + revision_content + " - Content is: ```" + db_changes_content + "```" };
+  var payload = { "text" : current_user + " just updated \n" + output };
 
   //the URL payload
   var options = {
