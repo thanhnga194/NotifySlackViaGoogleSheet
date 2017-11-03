@@ -4,6 +4,8 @@
 
 // CONFIG
 var SLACK_URL = "https://hooks.slack.com/services/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"
+var BOT_NAME = "Progress Tracker"
+var BOT_AVATAR = ":grand-opening:"
 var ROW_HEADER = 4
 
 // COLUMN DATA CHANGE
@@ -104,7 +106,10 @@ function ceta_db_column_edit(event){
   Logger.log("output = %s", output)
 
   // generate the payload text object
-  var payload = { "text" : current_user + " just updated:\n" + output };
+  var payload = { "text": current_user + " just updated:\n" + output,
+                  "icon_emoji": BOT_AVATAR,
+                  "username": BOT_NAME
+   };
   Logger.log("payload = %s", payload)
 
   //the URL payload
