@@ -8,7 +8,7 @@
 function ceta_db_column_edit(event){
   Logger.log("ceta_db_column_edit")
 
-  var column_change = 7
+
 
   // get this spread sheet
   var ceta_spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -17,7 +17,7 @@ function ceta_db_column_edit(event){
   var ceta_range = event.source.getActiveRange();
   Logger.log("ceta_spreadsheet = %s ceta_sheet = %s ceta_range = %s", ceta_spreadsheet, ceta_sheet, ceta_range)
 
-  //get the cell thingy
+  // get the cell thingy
   var active_cell = ceta_sheet.getActiveCell();
   var active_row = active_cell.getRow();
   var active_column = active_cell.getColumn();
@@ -29,26 +29,26 @@ function ceta_db_column_edit(event){
   //if not the db column get out
   // if (active_column != 14) return;
 
-  //get the revision
-  var revision_range = ceta_sheet.getRange(active_row, 2);
+  // get the revision
+  var HEADER_ROW_NUMBER = 4
+  var revision_range = ceta_sheet.getRange(HEADER_ROW_NUMBER, active_column);
   var revision_content = revision_range.getValue();
   Logger.log("revision_range = %s revision_content = %s", revision_range, revision_content)
 
-  //get the changes in the cell
-  var db_changes_range = ceta_sheet.getRange(active_row, column_change);
+  // Get the changes in the cell
+  var db_changes_range = ceta_sheet.getRange(active_row, active_column);
   var db_changes_content = db_changes_range.getValue();
 
   Logger.log("db_changes_range = %s db_changes_content = %s", db_changes_range, db_changes_content)
 
-  //if its nothing then lets not bother (they're probably deleting stuff)
+  // if its nothing then lets not bother (they're probably deleting stuff)
   if (db_changes_content == "") return;
 
-  //the url to post to
+  // The url to post to
   var slack_url = "https://hooks.slack.com/services/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";
 
-  //get the logged in user (we can only get email I thinks)
+  // get the logged in user (we can only get email I thinks)
   var current_user = Session.getActiveUser().getEmail();
-  //var current_user = ""
 
   //if its blank (why?)
   if (current_user == "") {
@@ -57,7 +57,7 @@ function ceta_db_column_edit(event){
    current_user = "An unknown";
   }
 
-  //generate the payload text object
+  // generate the payload text object
   var payload = { "text" : current_user + " has just entered text into the db field for revision " + revision_content + " - Content is: ```" + db_changes_content + "```" };
 
   //the URL payload
