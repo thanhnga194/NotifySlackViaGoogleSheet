@@ -8,7 +8,7 @@ var BOT_NAME = "Progress Tracker"
 var BOT_AVATAR = ":clock:"
 var ROW_HEADER = 4
 var CACHE_TIME = 3600 // = 60 * 60 seconds = 60 minutes
-var CACHE_KEY = "changed-rows-t2"
+var CACHE_KEY = "changed-rows-t3"
 
 
 // COLUMN DATA CHANGE
@@ -32,6 +32,7 @@ var KEY_STORE_ID = "StoreID"
 var KEY_TASK_DESCRIPTION = "TaskDescription"
 var KEY_ASSIGNED_TO = "AssignedTo"
 var KEY_STATUS = "Status"
+var KEY_OLD_VALUE = "OldValue"
 
 
 function ceta_db_column_edit(event){
@@ -102,7 +103,7 @@ function ceta_db_column_edit(event){
     dataChangeValue = Utilities.formatDate(dataChangeValue, "GMT+7", "dd/MM/yyyy")
   }
 
-  saveChangesIntoCache(active_row, dataChangeKey, dataChangeValue, storeName, storeId, taskDescription, assignedTo, status)
+  saveChangesIntoCache(active_row, dataChangeKey, dataChangeValue, event.oldValue, storeName, storeId, taskDescription, assignedTo, status)
 }
 
 function checkCacheToSendToSlack(event) {
@@ -113,9 +114,10 @@ function checkCacheToSendToSlack(event) {
   Logger.log("changedRows = %s", changedRows)
   changedRowsObject = JSON.parse(changedRows)
 
-  for (var row in changedRowsObject) {
+  for (var key in changedRowsObject) {
     // each row will send slack notification
-    Logger.log("row = %s", row)
+    Logger.log("key = %s changedRowsObject[key] = %s", key, changedRowsObject[key])
+    // send slack notificaiton with format
 
   }
   // clear cache
@@ -198,9 +200,9 @@ function checkCacheToSendToSlack(event) {
 //   }
 // }
 
-function saveChangesIntoCache(rowNumber, key, value, storeName, storeId, taskDescription, assignedTo, status) {
-  Logger.log("saveValueToCache with rowNumber = %s, key = %s, value = %s storeName = %s storeId = %s taskDescription = %s assignedTo = %s status = %s",
-             rowNumber, key, value, storeName, storeId, taskDescription, assignedTo, status)
+function saveChangesIntoCache(rowNumber, key, oldValue, value, storeName, storeId, taskDescription, assignedTo, status) {
+  Logger.log("saveValueToCache rowNumber = %s key = %s value = %s oldValue = %s storeName = %s storeId = %s taskDescription = %s assignedTo = %s status = %s",
+             rowNumber, key, value, oldValue, storeName, storeId, taskDescription, assignedTo, status)
   // GET JSON in cache,
   // if cache has no data, then let it empty
   // then covernt to object
@@ -222,11 +224,13 @@ function saveChangesIntoCache(rowNumber, key, value, storeName, storeId, taskDes
 
   // update value
   changedRow[key] = value
+  changedRow[KEY_OLD_VALUE] = oldValue
   changedRow[KEY_STORE_NAME] = storeName
   changedRow[KEY_STORE_ID] = storeId
   changedRow[KEY_TASK_DESCRIPTION] = taskDescription
   changedRow[KEY_ASSIGNED_TO] = assignedTo
   changedRow[KEY_STATUS] = status
+
 
   Logger.log("changedRow later = %s", changedRow)
   changedRowsObject[rowNumber] = changedRow
