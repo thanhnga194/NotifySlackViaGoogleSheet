@@ -96,18 +96,20 @@ function ceta_db_column_edit(event){
   // Actual End: 17/11/2017
   // Doc Links: <links>
 
+  // FILL USER NAME EDITED
+  var textUserEdited = current_user + " just updated:"
 
   // *FILL TITLE*
   var title = EMPTY_STRING
   // Get cache of latest user name.
-  var cache = CacheService.getScriptCache();
+  var cache = CacheService.getDocumentCache();
   var latestUserName = cache.get("latest-user-name");
   Logger.log("latestUserName = %s", latestUserName)
 
   // If latest user name != nil && current user name != latest user name, then send title
   if (latestUserName != null && current_user != latestUserName) {
     Logger.log("latestUserName != null && current_user != latestUserName")
-    title = Utilities.formatString("[%s %s - %s] %s (PIC: %s)", status, store_id, store, task_description, assigned_to)
+    title = Utilities.formatString("%s\n[%s %s - %s] %s (PIC: %s)", textUserEdited, status, store_id, store, task_description, assigned_to)
   } else { // else don't send title, and store latest user name with current user name
     cache.put("latest-user-name", current_user)
   }
@@ -133,7 +135,7 @@ function ceta_db_column_edit(event){
   Logger.log("output = %s", output)
 
   // generate the payload text object
-  var payload = { "text": current_user + " just updated:\n" + output,
+  var payload = { "text": output,
                   "icon_emoji": BOT_AVATAR,
                   "username": BOT_NAME
    };
