@@ -8,6 +8,8 @@ var BOT_NAME = "Progress Tracker"
 var BOT_AVATAR = ":clock:"
 var ROW_HEADER = 4
 var CACHE_TIME = 3600 // = 60 * 60 seconds = 60 minutes
+var CACHE_KEY = "changed-rows-t2"
+
 
 // COLUMN DATA CHANGE
 var COLUMN_CHANGE_DATA_DOC_LINKS = 7
@@ -23,6 +25,14 @@ var COLUMN_STORE_ID = 1
 
 // SIMPLE VALUE
 var EMPTY_STRING = ""
+
+// Cache keys
+var KEY_STORE_NAME = "StoreName"
+var KEY_STORE_ID = "StoreID"
+var KEY_TASK_DESCRIPTION = "TaskDescription"
+var KEY_ASSIGNED_TO = "AssignedTo"
+var KEY_STATUS = "Status"
+
 
 function ceta_db_column_edit(event){
   Logger.log("ceta_db_column_edit with event = %s", event)
@@ -55,19 +65,16 @@ function ceta_db_column_edit(event){
   }
 
   // get the revision
-  var revision_range = ceta_sheet.getRange(ROW_HEADER, active_column);
-  var revision_content = revision_range.getValue();
-  Logger.log("revision_range = %s revision_content = %s", revision_range, revision_content)
+  var dataChangeKey = ceta_sheet.getRange(ROW_HEADER, active_column).getValue();
+  Logger.log("dataChangeKey = %s", dataChangeKey)
 
   // Get the changes in the cell
-  var db_changes_range = ceta_sheet.getRange(active_row, active_column);
-  var db_changes_content = db_changes_range.getValue();
-
-  Logger.log("db_changes_range = %s db_changes_content = %s", db_changes_range, db_changes_content)
+  var dataChangeValue = ceta_sheet.getRange(active_row, active_column).getValue();
+  Logger.log("dataChangeValue = %s", dataChangeValue)
 
   // if its nothing then lets not bother (they're probably deleting stuff)
-  if (db_changes_content == EMPTY_STRING) {
-    Logger.log("db_changes_content == empty")
+  if (dataChangeValue == EMPTY_STRING) {
+    Logger.log("dataChangeValue == empty")
     return;
   }
 
@@ -84,72 +91,141 @@ function ceta_db_column_edit(event){
   }
 
   // get value
-  var store = ceta_sheet.getRange(active_row, COLUMN_STORE).getValue();
-  var store_id = ceta_sheet.getRange(active_row, COLUMN_STORE_ID).getValue()
-  var task_description = ceta_sheet.getRange(active_row, COLUMN_TASK_DESCRIPTION).getValue();
-  var assigned_to = ceta_sheet.getRange(active_row, COLUMN_ASSIGNED_TO).getValue()
+  var storeName = ceta_sheet.getRange(active_row, COLUMN_STORE).getValue();
+  var storeId = ceta_sheet.getRange(active_row, COLUMN_STORE_ID).getValue()
+  var taskDescription = ceta_sheet.getRange(active_row, COLUMN_TASK_DESCRIPTION).getValue();
+  var assignedTo = ceta_sheet.getRange(active_row, COLUMN_ASSIGNED_TO).getValue()
   var status = ceta_sheet.getRange(active_row, COLUMN_STATUS).getValue()
 
-  // Sample output of notification
-  // [🏁1002 - <STORE NAME>] Tender Hand-over to SD (PIC: SD)
-  // Actual Start: 17/11/2017
-  // Actual End: 17/11/2017
-  // Doc Links: <links>
+  saveChangesIntoCache(active_row, dataChangeKey, dataChangeValue, storeName, storeId, taskDescription, assignedTo, status)
+}
 
-  // FILL USER NAME EDITED
-  var textUserEdited = current_user + " just updated:"
+function checkCacheToSendToSlack(event) {
+  var cache = CacheService.getScriptCache()
+  var changedRows = cache.get(CACHE_KEY)
 
-  // *FILL TITLE*
-  var title = EMPTY_STRING
-  // Get cache of latest user name.
-  var cache = CacheService.getDocumentCache();
-  var latestUserName = cache.get("latest-user-name");
-  Logger.log("latestUserName = %s", latestUserName)
+  for (var row in changedRows) {
+    // each row will send slack notification
+    Logger.log("row = %s", row)
 
-  // If latest user name != nil && current user name != latest user name, then send title
-  if (latestUserName != null && current_user != latestUserName) {
-    Logger.log("latestUserName != null && current_user != latestUserName")
-    title = Utilities.formatString("%s\n[%s %s - %s] %s (PIC: %s)", textUserEdited, status, store_id, store, task_description, assigned_to)
-  } else { // else don't send title, and store latest user name with current user name
-    cache.put("latest-user-name", current_user)
   }
-  Logger.log("title = %s", title)
+  // clear cache
+  cache.remove(CACHE_KEY)
 
-  // *FILL CONTENT*
-  var content = EMPTY_STRING
-  if (active_column == COLUMN_CHANGE_DATA_ACTUAL_START || active_column == COLUMN_CHANGE_DATA_ACTUAL_END) {
-    date = Utilities.formatDate(db_changes_content, "GMT+7", "dd/MM/yyyy");
-    content = Utilities.formatString("*%s*: %s", revision_content, date)
-  } else {
-    content = Utilities.formatString("*%s*: %s", revision_content, db_changes_content)
+  // // Sample output of notification
+  // // [🏁1002 - <STORE NAME>] Tender Hand-over to SD (PIC: SD)
+  // // Actual Start: 17/11/2017
+  // // Actual End: 17/11/2017
+  // // Doc Links: <links>
+
+  // // FILL USER NAME EDITED
+  // var textUserEdited = current_user + " just updated:"
+
+  // // *FILL TITLE*
+  // var title = EMPTY_STRING
+  // // Get cache of latest user name.
+  // var cache = CacheService.getDocumentCache();
+  // var latestUserName = cache.get("latest-user-name");
+  // Logger.log("latestUserName = %s", latestUserName)
+
+  // // If latest user name != nil && current user name != latest user name, then send title
+  // if (latestUserName != null && current_user != latestUserName) {
+  //   Logger.log("latestUserName != null && current_user != latestUserName")
+  //   title = Utilities.formatString("%s\n[%s %s - %s] %s (PIC: %s)", textUserEdited, status, store_id, store, task_description, assigned_to)
+  // } else { // else don't send title, and store latest user name with current user name
+  //   cache.put("latest-user-name", current_user)
+  // }
+  // Logger.log("title = %s", title)
+
+  // // *FILL CONTENT*
+  // var content = EMPTY_STRING
+  // if (active_column == COLUMN_CHANGE_DATA_ACTUAL_START || active_column == COLUMN_CHANGE_DATA_ACTUAL_END) {
+  //   date = Utilities.formatDate(dataChangeValue, "GMT+7", "dd/MM/yyyy");
+  //   content = Utilities.formatString("*%s*: %s", dataChangeKey, date)
+  // } else {
+  //   content = Utilities.formatString("*%s*: %s", dataChangeKey, dataChangeValue)
+  // }
+  // Logger.log("content = %s", content)
+
+  // // *FILL OUTPUT*
+  // var output = EMPTY_STRING
+  // if (title != EMPTY_STRING) {
+  //   output = Utilities.formatString("%s \n %s", title, content)
+  // } else {
+  //   output = Utilities.formatString("%s", content)
+  // }
+  // Logger.log("output = %s", output)
+
+  // // generate the payload text object
+  // var payload = { "text": output,
+  //                 "icon_emoji": BOT_AVATAR,
+  //                 "username": BOT_NAME
+  //  };
+  // Logger.log("payload = %s", payload)
+
+  // //the URL payload
+  // var options = {
+  //    "method" : "post",
+  //    "contentType" : "application/json",
+  //    "payload" : JSON.stringify(payload),
+  //    "muteHttpExceptions" : true
+  // };
+
+  // // send to Slack
+  // var response = UrlFetchApp.fetch(SLACK_URL, options);
+  // Logger.log("response = %s", response)
+}
+
+// Sample data cache
+// {
+//   {
+//     "1" : {
+//       "ActualStart": value,
+//       "ActualEnd": actualEndValue,
+//       "DocLink": docLinkValue
+//     },
+//     "2"
+//     ...........
+//   }
+// }
+
+function saveChangesIntoCache(rowNumber, key, value, storeName, storeId, taskDescription, assignedTo, status) {
+  Logger.log("saveValueToCache with rowNumber = %s, key = %s, value = %s storeName = %s storeId = %s taskDescription = %s assignedTo = %s status = %s",
+             rowNumber, key, value, storeName, storeId, taskDescription, assignedTo, status)
+  // GET JSON in cache,
+  // if cache has no data, then let it empty
+  // then covernt to object
+  var cache = CacheService.getScriptCache()
+  var changedRows = cache.get(CACHE_KEY)
+  if (changedRows == null) {
+    changedRows = "{}"
   }
-  Logger.log("content = %s", content)
+  var changedRowsObject = JSON.parse(changedRows)
+  Logger.log("changedRowsObject first = %s", changedRowsObject)
 
-  // *FILL OUTPUT*
-  var output = EMPTY_STRING
-  if (title != EMPTY_STRING) {
-    output = Utilities.formatString("%s \n %s", title, content)
-  } else {
-    output = Utilities.formatString("%s", content)
+  // PUSH key/pair into JSON
+  // form data first
+  var changedRow = changedRowsObject[rowNumber]
+  if (changedRow == null) {
+    changedRow = {}
   }
-  Logger.log("output = %s", output)
+  Logger.log("changedRow first = %s", changedRow)
 
-  // generate the payload text object
-  var payload = { "text": output,
-                  "icon_emoji": BOT_AVATAR,
-                  "username": BOT_NAME
-   };
-  Logger.log("payload = %s", payload)
+  // update value
+  changedRow[key] = value
+  changedRow[KEY_STORE_NAME] = storeName
+  changedRow[KEY_STORE_ID] = storeId
+  changedRow[KEY_TASK_DESCRIPTION] = taskDescription
+  changedRow[KEY_ASSIGNED_TO] = assignedTo
+  changedRow[KEY_STATUS] = status
 
-  //the URL payload
-  var options = {
-     "method" : "post",
-     "contentType" : "application/json",
-     "payload" : JSON.stringify(payload),
-     "muteHttpExceptions" : true
-  };
+  Logger.log("changedRow later = %s", changedRow)
+  changedRowsObject[rowNumber] = changedRow
+  Logger.log("changedRowsObject later = %s", changedRowsObject)
 
-  // send to Slack
-  var response = UrlFetchApp.fetch(SLACK_URL, options);
-  Logger.log("response = %s", response)
+  // STORE json by stringify
+  var changeRowsObjectStringify = JSON.stringify(changedRowsObject)
+  Logger.log("changeRowsObjectStringify = %s", changeRowsObjectStringify)
+
+  cache.put(CACHE_KEY, changeRowsObjectStringify)
 }
