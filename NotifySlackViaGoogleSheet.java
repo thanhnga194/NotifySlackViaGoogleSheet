@@ -22,6 +22,8 @@ var COLUMN_TASK_DESCRIPTION = 3
 var COLUMN_ASSIGNED_TO = 5
 var COLUMN_STATUS = 4
 var COLUMN_STORE_ID = 1
+var COLUMN_PLAN_START = 9
+var COLUMN_PLAN_END = 10
 
 // SIMPLE VALUE
 var EMPTY_STRING = ""
@@ -33,6 +35,8 @@ var KEY_TASK_DESCRIPTION = "TaskDescription"
 var KEY_ASSIGNED_TO = "AssignedTo"
 var KEY_STATUS = "Status"
 var KEY_OLD_VALUE = "OldValue"
+var KEY_PLAN_START = "PlanStart"
+var KEY_PLAN_END = "PlanEnd"
 
 
 function ceta_db_column_edit(event){
@@ -66,8 +70,9 @@ function ceta_db_column_edit(event){
   }
 
   // get the revision
-  var dataChangeKey = ceta_sheet.getRange(ROW_HEADER, active_column).getValue();
-  Logger.log("dataChangeKey = %s", dataChangeKey)
+  // var dataChangeKey = ceta_sheet.getRange(ROW_HEADER, active_column).getValue();
+  // Logger.log("dataChangeKey = %s", dataChangeKey)
+  var dataChangeKey = active_column
 
   // Get the changes in the cell
   var dataChangeValue = ceta_sheet.getRange(active_row, active_column).getValue();
@@ -97,13 +102,15 @@ function ceta_db_column_edit(event){
   var taskDescription = ceta_sheet.getRange(active_row, COLUMN_TASK_DESCRIPTION).getValue();
   var assignedTo = ceta_sheet.getRange(active_row, COLUMN_ASSIGNED_TO).getValue()
   var status = ceta_sheet.getRange(active_row, COLUMN_STATUS).getValue()
+  var planStart = Utilities.formatDate(ceta_sheet.getRange(active_row, COLUMN_PLAN_START).getValue(), "GMT+7", "dd/MM/yyyy")
+  var planEnd = Utilities.formatDate(ceta_sheet.getRange(active_row, COLUMN_PLAN_END).getValue(), "GMT+7", "dd/MM/yyyy")
 
   // sanity value
   if (active_column == COLUMN_CHANGE_DATA_ACTUAL_START || active_column == COLUMN_CHANGE_DATA_ACTUAL_END) {
     dataChangeValue = Utilities.formatDate(dataChangeValue, "GMT+7", "dd/MM/yyyy")
   }
 
-  saveChangesIntoCache(active_row, dataChangeKey, dataChangeValue, event.oldValue, storeName, storeId, taskDescription, assignedTo, status)
+  saveChangesIntoCache(active_row, dataChangeKey, dataChangeValue, event.oldValue, storeName, storeId, taskDescription, assignedTo, status, planStart, planEnd)
 }
 
 function checkCacheToSendToSlack(event) {
@@ -119,19 +126,33 @@ function checkCacheToSendToSlack(event) {
     var changedRow = changedRowsObject[key]
     Logger.log("key = %s changedRow = %s", key, changedRow)
 
-    var value = changedRow[key]
-    var oldValue = changedRow[KEY_OLD_VALUE]
     var storeName = changedRow[KEY_STORE_NAME]
     var storeId = changedRow[KEY_STORE_ID]
     var taskDescription = changedRow[KEY_TASK_DESCRIPTION]
     var assignedTo = changedRow[KEY_ASSIGNED_TO]
     var status = changedRow[KEY_STATUS]
+    var planStart = changedRow[KEY_PLAN_START]
+    var planEnd = changedRow[KEY_PLAN_END]
+
+    // build fields changed
+    var fieldActualStart = null
+    var fieldActualEnd = null
+    var fieldDocLink = null
+
+    actualStart = changedRow[COLUMN_CHANGE_DATA_ACTUAL_START]
+    actualEnd = changedRow[COLUMN_CHANGE_DATA_ACTUAL_END]
+    docLink = changedRow[COLUMN_CHANGE_DATA_DOC_LINKS]
+    if (actualStart != null) {
+      fieldActualStart = {
+                      "title": "Actual Start            <=>      Plan Start",
+                      "value": Utilities.formatString("%s                       %s", actualStart, planStart),
+                      "short": false
+                  }
+
+    }
+
 
     // send slack notificaiton with format
-    //var payload = { "text": output,
-  //                 "icon_emoji": BOT_AVATAR,
-  //                 "username": BOT_NAME
-  //  };
     var payload = {
       "icon_emoji": BOT_AVATAR,
       "username": BOT_NAME,
@@ -257,10 +278,9 @@ function checkCacheToSendToSlack(event) {
 //     ...........
 //   }
 // }
-
-function saveChangesIntoCache(rowNumber, key, oldValue, value, storeName, storeId, taskDescription, assignedTo, status) {
-  Logger.log("saveValueToCache rowNumber = %s key = %s value = %s oldValue = %s storeName = %s storeId = %s taskDescription = %s assignedTo = %s status = %s",
-             rowNumber, key, value, oldValue, storeName, storeId, taskDescription, assignedTo, status)
+function saveChangesIntoCache(rowNumber, key, oldValue, value, storeName, storeId, taskDescription, assignedTo, status, planStart, planEnd) {
+  Logger.log("saveValueToCache rowNumber = %s key = %s value = %s oldValue = %s storeName = %s storeId = %s taskDescription = %s assignedTo = %s status = %s planStart = %s planEnd = %s",
+             rowNumber, key, value, oldValue, storeName, storeId, taskDescription, assignedTo, status, planStart, planEnd)
   // GET JSON in cache,
   // if cache has no data, then let it empty
   // then covernt to object
@@ -288,7 +308,8 @@ function saveChangesIntoCache(rowNumber, key, oldValue, value, storeName, storeI
   changedRow[KEY_TASK_DESCRIPTION] = taskDescription
   changedRow[KEY_ASSIGNED_TO] = assignedTo
   changedRow[KEY_STATUS] = status
-
+  changedRow[KEY_PLAN_START] = planStart
+  changedRow[KEY_PLAN_END] = planEnd
 
   Logger.log("changedRow later = %s", changedRow)
   changedRowsObject[rowNumber] = changedRow
