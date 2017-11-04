@@ -112,13 +112,71 @@ function checkCacheToSendToSlack(event) {
   var cache = CacheService.getScriptCache()
   var changedRows = cache.get(CACHE_KEY)
   Logger.log("changedRows = %s", changedRows)
-  changedRowsObject = JSON.parse(changedRows)
+  var changedRowsObject = JSON.parse(changedRows)
 
   for (var key in changedRowsObject) {
     // each row will send slack notification
-    Logger.log("key = %s changedRowsObject[key] = %s", key, changedRowsObject[key])
-    // send slack notificaiton with format
+    var changedRow = changedRowsObject[key]
+    Logger.log("key = %s changedRow = %s", key, changedRow)
 
+    var value = changedRow[key]
+    var oldValue = changedRow[KEY_OLD_VALUE]
+    var storeName = changedRow[KEY_STORE_NAME]
+    var storeId = changedRow[KEY_STORE_ID]
+    var taskDescription = changedRow[KEY_TASK_DESCRIPTION]
+    var assignedTo = changedRow[KEY_ASSIGNED_TO]
+    var status = changedRow[KEY_STATUS]
+
+    // send slack notificaiton with format
+    //var payload = { "text": output,
+  //                 "icon_emoji": BOT_AVATAR,
+  //                 "username": BOT_NAME
+  //  };
+    var payload = {
+      "icon_emoji": BOT_AVATAR,
+      "username": BOT_NAME,
+      "attachments": [
+          {
+              "fallback": "Required plain-text summary of the attachment.",
+              "color": "#36a64f",
+              "title":  Utilities.formatString("[%s %s - %s] %s (PIC: %s)", status, storeId, storeName, taskDescription, assignedTo),
+              "title_link": "https://docs.google.com/spreadsheets/d/1hKiinJXluVB1N-9z92Hv8YQYJgojkYwzOnE-dKmGHdY/edit?pli=1#gid=149195960",
+              "fields": [
+                  {
+                      "title": "Actual Start            <=>      Plan Start",
+                      "value": "01/01/2018                       30/12/2017",
+                      "short": false
+                  },
+                  {
+                      "title": "Actual End              <=>      Plan End",
+                      "value": "01/01/2018                       30/12/2017",
+                      "short": false
+                  },
+                  {
+                      "title": "Doc Links",
+                      "value": "https://docs.google.com/spreadsheets/d/1hKiinJXluVB1N-9z92Hv8YQYJgojkYwzOnE-dKmGHdY/edit?pli=1#gid=149195960",
+                      "short": false
+                  }
+              ],
+              "image_url": "http://my-website.com/path/to/image.jpg",
+              "thumb_url": "http://example.com/path/to/thumb.png",
+              "ts": 123456789
+          }
+      ]
+    };
+    Logger.log("payload = %s", payload)
+
+    // the URL payload
+    var options = {
+       "method" : "post",
+       "contentType" : "application/json",
+       "payload" : JSON.stringify(payload),
+       "muteHttpExceptions" : true
+    };
+
+    // send to Slack
+    var response = UrlFetchApp.fetch(SLACK_URL, options);
+    Logger.log("response = %s", response)
   }
   // clear cache
   // cache.remove(CACHE_KEY)
