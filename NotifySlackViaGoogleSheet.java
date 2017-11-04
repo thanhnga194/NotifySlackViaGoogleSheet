@@ -8,7 +8,7 @@ var BOT_NAME = "Progress Tracker"
 var BOT_AVATAR = ":clock:"
 var ROW_HEADER = 4
 var CACHE_TIME = 3600 // = 60 * 60 seconds = 60 minutes
-var CACHE_KEY = "changed-rows-t3"
+var CACHE_KEY = "changed-rows-t4"
 
 
 // COLUMN DATA CHANGE
@@ -148,9 +148,21 @@ function checkCacheToSendToSlack(event) {
                       "value": Utilities.formatString("%s                       %s", actualStart, planStart),
                       "short": false
                   }
-
     }
-
+    if (actualEnd != null) {
+      fieldActualEnd = {
+                      "title": "Actual End            <=>      Plan End",
+                      "value": Utilities.formatString("%s                       %s", actualEnd, planEnd),
+                      "short": false
+                  }
+    }
+    if (docLink != null) {
+      fieldDocLink = {
+                      "title": "Doc Links",
+                      "value": docLink,
+                      "short": false
+                  }
+    }
 
     // send slack notificaiton with format
     var payload = {
@@ -163,25 +175,12 @@ function checkCacheToSendToSlack(event) {
               "title":  Utilities.formatString("[%s %s - %s] %s (PIC: %s)", status, storeId, storeName, taskDescription, assignedTo),
               "title_link": "https://docs.google.com/spreadsheets/d/1hKiinJXluVB1N-9z92Hv8YQYJgojkYwzOnE-dKmGHdY/edit?pli=1#gid=149195960",
               "fields": [
-                  {
-                      "title": "Actual Start            <=>      Plan Start",
-                      "value": "01/01/2018                       30/12/2017",
-                      "short": false
-                  },
-                  {
-                      "title": "Actual End              <=>      Plan End",
-                      "value": "01/01/2018                       30/12/2017",
-                      "short": false
-                  },
-                  {
-                      "title": "Doc Links",
-                      "value": "https://docs.google.com/spreadsheets/d/1hKiinJXluVB1N-9z92Hv8YQYJgojkYwzOnE-dKmGHdY/edit?pli=1#gid=149195960",
-                      "short": false
-                  }
+                  fieldActualStart,
+                  fieldActualEnd,
+                  fieldDocLink
               ],
               "image_url": "http://my-website.com/path/to/image.jpg",
               "thumb_url": "http://example.com/path/to/thumb.png",
-              "ts": 123456789
           }
       ]
     };
@@ -199,8 +198,10 @@ function checkCacheToSendToSlack(event) {
     var response = UrlFetchApp.fetch(SLACK_URL, options);
     Logger.log("response = %s", response)
   }
+
   // clear cache
-  // cache.remove(CACHE_KEY)
+  Logger.log("cache.remove(%s)", CACHE_KEY)
+  cache.remove(CACHE_KEY)
 
   // // Sample output of notification
   // // [🏁1002 - <STORE NAME>] Tender Hand-over to SD (PIC: SD)
@@ -278,7 +279,7 @@ function checkCacheToSendToSlack(event) {
 //     ...........
 //   }
 // }
-function saveChangesIntoCache(rowNumber, key, oldValue, value, storeName, storeId, taskDescription, assignedTo, status, planStart, planEnd) {
+function saveChangesIntoCache(rowNumber, key, value, oldValue, storeName, storeId, taskDescription, assignedTo, status, planStart, planEnd) {
   Logger.log("saveValueToCache rowNumber = %s key = %s value = %s oldValue = %s storeName = %s storeId = %s taskDescription = %s assignedTo = %s status = %s planStart = %s planEnd = %s",
              rowNumber, key, value, oldValue, storeName, storeId, taskDescription, assignedTo, status, planStart, planEnd)
   // GET JSON in cache,
