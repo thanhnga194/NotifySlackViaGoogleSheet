@@ -7,6 +7,7 @@ var SLACK_URL = "https://hooks.slack.com/services/T144RMMK9/B7TA3NRU4/rtMkAslgG9
 var BOT_NAME = "Progress Tracker"
 var BOT_AVATAR = ":clock:"
 var ROW_HEADER = 4
+var CACHE_TIME = 3600 // = 60 * 60 seconds = 60 minutes
 
 // COLUMN DATA CHANGE
 var COLUMN_CHANGE_DATA_DOC_LINKS = 7
@@ -19,6 +20,9 @@ var COLUMN_TASK_DESCRIPTION = 3
 var COLUMN_ASSIGNED_TO = 5
 var COLUMN_STATUS = 4
 var COLUMN_STORE_ID = 1
+
+// SIMPLE VALUE
+var EMPTY_STRING = ""
 
 function ceta_db_column_edit(event){
   Logger.log("ceta_db_column_edit with event = %s", event)
@@ -62,7 +66,7 @@ function ceta_db_column_edit(event){
   Logger.log("db_changes_range = %s db_changes_content = %s", db_changes_range, db_changes_content)
 
   // if its nothing then lets not bother (they're probably deleting stuff)
-  if (db_changes_content == "") {
+  if (db_changes_content == EMPTY_STRING) {
     Logger.log("db_changes_content == empty")
     return;
   }
@@ -74,7 +78,7 @@ function ceta_db_column_edit(event){
   Logger.log("current_user = %s", current_user)
 
   // check if can get current_user
-  if (current_user == "") {
+  if (current_user == EMPTY_STRING) {
     // at least put something in
     current_user = "An unknown user";
   }
@@ -86,16 +90,31 @@ function ceta_db_column_edit(event){
   var assigned_to = ceta_sheet.getRange(active_row, COLUMN_ASSIGNED_TO).getValue()
   var status = ceta_sheet.getRange(active_row, COLUMN_STATUS).getValue()
 
-  // put value
   // Sample output of notification
   // [🏁1002 - <STORE NAME>] Tender Hand-over to SD (PIC: SD)
   // Actual Start: 17/11/2017
   // Actual End: 17/11/2017
   // Doc Links: <links>
-  var title = Utilities.formatString("[%s %s - %s] %s (PIC: %s)", status, store_id, store, task_description, assigned_to)
+
+
+  // *FILL TITLE*
+  var title = EMPTY_STRING
+  // Get cache of latest user name.
+  var cache = CacheService.getScriptCache();
+  var latestUserName = cache.get("latest-user-name");
+  Logger.log("latestUserName = %s", latestUserName)
+
+  // If latest user name != nil && current user name != latest user name, then send title
+  if (latestUserName != null && current_user != latestUserName) {
+    Logger.log("latestUserName != null && current_user != latestUserName")
+    title = Utilities.formatString("[%s %s - %s] %s (PIC: %s)", status, store_id, store, task_description, assigned_to)
+  } else { // else don't send title, and store latest user name with current user name
+    cache.put("latest-user-name", current_user)
+  }
   Logger.log("title = %s", title)
 
-  var content = ""
+  // *FILL CONTENT*
+  var content = EMPTY_STRING
   if (active_column == COLUMN_CHANGE_DATA_ACTUAL_START || active_column == COLUMN_CHANGE_DATA_ACTUAL_END) {
     date = Utilities.formatDate(db_changes_content, "GMT+7", "dd/MM/yyyy");
     content = Utilities.formatString("*%s*: %s", revision_content, date)
@@ -104,7 +123,13 @@ function ceta_db_column_edit(event){
   }
   Logger.log("content = %s", content)
 
-  var output = Utilities.formatString("%s \n %s", title, content)
+  // *FILL OUTPUT*
+  var output = EMPTY_STRING
+  if (title != EMPTY_STRING) {
+    output = Utilities.formatString("%s \n %s", title, content)
+  } else {
+    output = Utilities.formatString("%s", content)
+  }
   Logger.log("output = %s", output)
 
   // generate the payload text object
