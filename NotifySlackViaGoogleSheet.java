@@ -68,7 +68,9 @@ function ceta_db_column_edit(event){
   }
 
   // get the logged in user (we can only get email I thinks)
-  var current_user = Session.getActiveUser().getEmail();
+  var activeUser = Session.getActiveUser();
+  Logger.log("activeUser = %s", activeUser)
+  var current_user = activeUser.getEmail();
   Logger.log("current_user = %s", current_user)
 
   // check if can get current_user
