@@ -97,20 +97,29 @@ function ceta_db_column_edit(event){
   var assignedTo = ceta_sheet.getRange(active_row, COLUMN_ASSIGNED_TO).getValue()
   var status = ceta_sheet.getRange(active_row, COLUMN_STATUS).getValue()
 
+  // sanity value
+  if (active_column == COLUMN_CHANGE_DATA_ACTUAL_START || active_column == COLUMN_CHANGE_DATA_ACTUAL_END) {
+    dataChangeValue = Utilities.formatDate(dataChangeValue, "GMT+7", "dd/MM/yyyy")
+  }
+
   saveChangesIntoCache(active_row, dataChangeKey, dataChangeValue, storeName, storeId, taskDescription, assignedTo, status)
 }
 
 function checkCacheToSendToSlack(event) {
+  Logger.log("checkCacheToSendToSlack with event = %s", event)
+
   var cache = CacheService.getScriptCache()
   var changedRows = cache.get(CACHE_KEY)
+  Logger.log("changedRows = %s", changedRows)
+  changedRowsObject = JSON.parse(changedRows)
 
-  for (var row in changedRows) {
+  for (var row in changedRowsObject) {
     // each row will send slack notification
     Logger.log("row = %s", row)
 
   }
   // clear cache
-  cache.remove(CACHE_KEY)
+  // cache.remove(CACHE_KEY)
 
   // // Sample output of notification
   // // [🏁1002 - <STORE NAME>] Tender Hand-over to SD (PIC: SD)
