@@ -7,9 +7,7 @@ var SLACK_URL = "https://hooks.slack.com/services/T144RMMK9/B7TA3NRU4/rtMkAslgG9
 var BOT_NAME = "Progress Tracker"
 var BOT_AVATAR = ":clock:"
 var ROW_HEADER = 4
-var CACHE_TIME = 3600 // = 60 * 60 seconds = 60 minutes
 var CACHE_KEY = "changed-rows-t4"
-
 
 // COLUMN DATA CHANGE
 var COLUMN_CHANGE_DATA_DOC_LINKS = 7
@@ -148,21 +146,21 @@ function checkCacheToSendToSlack(event) {
                       "value": Utilities.formatString("%s                       %s", actualStart, planStart),
                       "short": false
                   }
-    }
+    };
     if (actualEnd != null) {
       fieldActualEnd = {
                       "title": "Actual End            <=>      Plan End",
                       "value": Utilities.formatString("%s                       %s", actualEnd, planEnd),
                       "short": false
                   }
-    }
+    };
     if (docLink != null) {
       fieldDocLink = {
                       "title": "Doc Links",
                       "value": docLink,
                       "short": false
                   }
-    }
+    };
 
     // send slack notificaiton with format
     var payload = {
@@ -202,69 +200,6 @@ function checkCacheToSendToSlack(event) {
   // clear cache
   Logger.log("cache.remove(%s)", CACHE_KEY)
   cache.remove(CACHE_KEY)
-
-  // // Sample output of notification
-  // // [🏁1002 - <STORE NAME>] Tender Hand-over to SD (PIC: SD)
-  // // Actual Start: 17/11/2017
-  // // Actual End: 17/11/2017
-  // // Doc Links: <links>
-
-  // // FILL USER NAME EDITED
-  // var textUserEdited = current_user + " just updated:"
-
-  // // *FILL TITLE*
-  // var title = EMPTY_STRING
-  // // Get cache of latest user name.
-  // var cache = CacheService.getDocumentCache();
-  // var latestUserName = cache.get("latest-user-name");
-  // Logger.log("latestUserName = %s", latestUserName)
-
-  // // If latest user name != nil && current user name != latest user name, then send title
-  // if (latestUserName != null && current_user != latestUserName) {
-  //   Logger.log("latestUserName != null && current_user != latestUserName")
-  //   title = Utilities.formatString("%s\n[%s %s - %s] %s (PIC: %s)", textUserEdited, status, store_id, store, task_description, assigned_to)
-  // } else { // else don't send title, and store latest user name with current user name
-  //   cache.put("latest-user-name", current_user)
-  // }
-  // Logger.log("title = %s", title)
-
-  // // *FILL CONTENT*
-  // var content = EMPTY_STRING
-  // if (active_column == COLUMN_CHANGE_DATA_ACTUAL_START || active_column == COLUMN_CHANGE_DATA_ACTUAL_END) {
-  //   date = Utilities.formatDate(dataChangeValue, "GMT+7", "dd/MM/yyyy");
-  //   content = Utilities.formatString("*%s*: %s", dataChangeKey, date)
-  // } else {
-  //   content = Utilities.formatString("*%s*: %s", dataChangeKey, dataChangeValue)
-  // }
-  // Logger.log("content = %s", content)
-
-  // // *FILL OUTPUT*
-  // var output = EMPTY_STRING
-  // if (title != EMPTY_STRING) {
-  //   output = Utilities.formatString("%s \n %s", title, content)
-  // } else {
-  //   output = Utilities.formatString("%s", content)
-  // }
-  // Logger.log("output = %s", output)
-
-  // // generate the payload text object
-  // var payload = { "text": output,
-  //                 "icon_emoji": BOT_AVATAR,
-  //                 "username": BOT_NAME
-  //  };
-  // Logger.log("payload = %s", payload)
-
-  // //the URL payload
-  // var options = {
-  //    "method" : "post",
-  //    "contentType" : "application/json",
-  //    "payload" : JSON.stringify(payload),
-  //    "muteHttpExceptions" : true
-  // };
-
-  // // send to Slack
-  // var response = UrlFetchApp.fetch(SLACK_URL, options);
-  // Logger.log("response = %s", response)
 }
 
 // Sample data cache
