@@ -96,7 +96,7 @@ function ceta_db_column_edit(event){
 
   // get value
   var storeName = ceta_sheet.getRange(active_row, COLUMN_STORE).getValue();
-  var storeId = ceta_sheet.getRange(active_row, COLUMN_STORE_ID).getValue()
+  var storeId = ceta_sheet.getRange(active_row, COLUMN_STORE_ID).getValue();
   var taskDescription = ceta_sheet.getRange(active_row, COLUMN_TASK_DESCRIPTION).getValue();
   var assignedTo = ceta_sheet.getRange(active_row, COLUMN_ASSIGNED_TO).getValue()
   var status = ceta_sheet.getRange(active_row, COLUMN_STATUS).getValue()
@@ -220,7 +220,7 @@ function saveChangesIntoCache(rowNumber, key, value, oldValue, storeName, storeI
   // GET JSON in cache,
   // if cache has no data, then let it empty
   // then covernt to object
-  var cache = CacheService.getScriptCache()
+  var cache = CacheService.getScriptCache();
   var changedRows = cache.get(CACHE_KEY)
   if (changedRows == null) {
     changedRows = "{}"
@@ -230,26 +230,26 @@ function saveChangesIntoCache(rowNumber, key, value, oldValue, storeName, storeI
 
   // PUSH key/pair into JSON
   // form data first
-  var changedRow = changedRowsObject[rowNumber]
+  var changedRow = changedRowsObject[rowNumber];
   if (changedRow == null) {
     changedRow = {}
   }
   Logger.log("changedRow first = %s", changedRow)
 
   // update value
-  changedRow[key] = value
+  changedRow[key] = value;
   changedRow[KEY_OLD_VALUE] = oldValue
   changedRow[KEY_STORE_NAME] = storeName
-  changedRow[KEY_STORE_ID] = storeId
-  changedRow[KEY_TASK_DESCRIPTION] = taskDescription
+  changedRow[KEY_STORE_ID] = storeId;
+  changedRow[KEY_TASK_DESCRIPTION] = taskDescription;
   changedRow[KEY_ASSIGNED_TO] = assignedTo
   changedRow[KEY_STATUS] = status
-  changedRow[KEY_PLAN_START] = planStart
+  changedRow[KEY_PLAN_START] = planStart;
   changedRow[KEY_PLAN_END] = planEnd
 
-  Logger.log("changedRow later = %s", changedRow)
-  changedRowsObject[rowNumber] = changedRow
-  Logger.log("changedRowsObject later = %s", changedRowsObject)
+  Logger.log("changedRow later = %s", changedRow);
+  changedRowsObject[rowNumber] = changedRow;
+  Logger.log("changedRowsObject later = %s", changedRowsObject);
 
   // STORE json by stringify
   var changeRowsObjectStringify = JSON.stringify(changedRowsObject)
