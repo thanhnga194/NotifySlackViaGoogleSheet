@@ -7,7 +7,6 @@ var SLACK_URL = "https://hooks.slack.com/services/T144RMMK9/B7TA3NRU4/rtMkAslgG9
 var BOT_NAME = "Progress Tracker"
 var BOT_AVATAR = ":clock:"
 var ROW_HEADER = 4
-var CACHE_KEY = "changed-rows-t4"
 
 // COLUMN DATA CHANGE
 var COLUMN_CHANGE_DATA_DOC_LINKS = 7
@@ -25,8 +24,11 @@ var COLUMN_PLAN_END = 10
 
 // SIMPLE VALUE
 var EMPTY_STRING = ""
+var TIME_ZONE = "GMT+7"
+var OUTPUT_DATE_FORMAT = "dd/MM/yyyy"
 
 // Cache keys
+var CACHE_KEY = "changed-rows-t4"
 var KEY_STORE_NAME = "StoreName"
 var KEY_STORE_ID = "StoreID"
 var KEY_TASK_DESCRIPTION = "TaskDescription"
@@ -100,12 +102,12 @@ function ceta_db_column_edit(event){
   var taskDescription = ceta_sheet.getRange(active_row, COLUMN_TASK_DESCRIPTION).getValue();
   var assignedTo = ceta_sheet.getRange(active_row, COLUMN_ASSIGNED_TO).getValue()
   var status = ceta_sheet.getRange(active_row, COLUMN_STATUS).getValue()
-  var planStart = Utilities.formatDate(ceta_sheet.getRange(active_row, COLUMN_PLAN_START).getValue(), "GMT+7", "dd/MM/yyyy")
-  var planEnd = Utilities.formatDate(ceta_sheet.getRange(active_row, COLUMN_PLAN_END).getValue(), "GMT+7", "dd/MM/yyyy")
+  var planStart = Utilities.formatDate(ceta_sheet.getRange(active_row, COLUMN_PLAN_START).getValue(), TIME_ZONE, OUTPUT_DATE_FORMAT)
+  var planEnd = Utilities.formatDate(ceta_sheet.getRange(active_row, COLUMN_PLAN_END).getValue(), TIME_ZONE, OUTPUT_DATE_FORMAT)
 
   // sanity value
   if (active_column == COLUMN_CHANGE_DATA_ACTUAL_START || active_column == COLUMN_CHANGE_DATA_ACTUAL_END) {
-    dataChangeValue = Utilities.formatDate(dataChangeValue, "GMT+7", "dd/MM/yyyy")
+    dataChangeValue = Utilities.formatDate(dataChangeValue, TIME_ZONE, OUTPUT_DATE_FORMAT)
   }
 
   saveChangesIntoCache(active_row, dataChangeKey, dataChangeValue, event.oldValue, storeName, storeId, taskDescription, assignedTo, status, planStart, planEnd)
@@ -198,8 +200,8 @@ function checkCacheToSendToSlack(event) {
   }
 
   // clear cache
-  Logger.log("cache.remove(%s)", CACHE_KEY)
-  cache.remove(CACHE_KEY)
+  Logger.log("cache.remove(%s)", CACHE_KEY);
+  cache.remove(CACHE_KEY);
 }
 
 // Sample data cache
@@ -221,39 +223,39 @@ function saveChangesIntoCache(rowNumber, key, value, oldValue, storeName, storeI
   // if cache has no data, then let it empty
   // then covernt to object
   var cache = CacheService.getScriptCache();
-  var changedRows = cache.get(CACHE_KEY)
+  var changedRows = cache.get(CACHE_KEY);
   if (changedRows == null) {
-    changedRows = "{}"
+    changedRows = "{}";
   }
-  var changedRowsObject = JSON.parse(changedRows)
-  Logger.log("changedRowsObject first = %s", changedRowsObject)
+  var changedRowsObject = JSON.parse(changedRows);
+  Logger.log("changedRowsObject first = %s", changedRowsObject);
 
   // PUSH key/pair into JSON
   // form data first
   var changedRow = changedRowsObject[rowNumber];
   if (changedRow == null) {
-    changedRow = {}
+    changedRow = {};
   }
-  Logger.log("changedRow first = %s", changedRow)
+  Logger.log("changedRow first = %s", changedRow);
 
   // update value
   changedRow[key] = value;
-  changedRow[KEY_OLD_VALUE] = oldValue
-  changedRow[KEY_STORE_NAME] = storeName
+  changedRow[KEY_OLD_VALUE] = oldValue;
+  changedRow[KEY_STORE_NAME] = storeName;
   changedRow[KEY_STORE_ID] = storeId;
   changedRow[KEY_TASK_DESCRIPTION] = taskDescription;
-  changedRow[KEY_ASSIGNED_TO] = assignedTo
-  changedRow[KEY_STATUS] = status
+  changedRow[KEY_ASSIGNED_TO] = assignedTo;
+  changedRow[KEY_STATUS] = status;
   changedRow[KEY_PLAN_START] = planStart;
-  changedRow[KEY_PLAN_END] = planEnd
+  changedRow[KEY_PLAN_END] = planEnd;
 
   Logger.log("changedRow later = %s", changedRow);
   changedRowsObject[rowNumber] = changedRow;
   Logger.log("changedRowsObject later = %s", changedRowsObject);
 
   // STORE json by stringify
-  var changeRowsObjectStringify = JSON.stringify(changedRowsObject)
-  Logger.log("changeRowsObjectStringify = %s", changeRowsObjectStringify)
+  var changeRowsObjectStringify = JSON.stringify(changedRowsObject);
+  Logger.log("changeRowsObjectStringify = %s", changeRowsObjectStringify);
 
-  cache.put(CACHE_KEY, changeRowsObjectStringify)
+  cache.put(CACHE_KEY, changeRowsObjectStringify);
 }
