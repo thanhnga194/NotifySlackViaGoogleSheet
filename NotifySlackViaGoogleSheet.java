@@ -28,7 +28,7 @@ var TIME_ZONE = "GMT+7"
 var OUTPUT_DATE_FORMAT = "dd/MM/yyyy"
 
 // Cache keys
-var CACHE_KEY = "changed-rows-t4"
+var CACHE_KEY = "changed-rows-t4" // change when want to invalidate clear old cache
 var KEY_STORE_NAME = "StoreName"
 var KEY_STORE_ID = "StoreID"
 var KEY_TASK_DESCRIPTION = "TaskDescription"
@@ -43,39 +43,39 @@ function ceta_db_column_edit(event){
   Logger.log("ceta_db_column_edit with event = %s", event)
 
   // get this spread sheet
-  var ceta_spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   // get the sheets and range from the spreadsheet
-  var ceta_sheet = event.source.getActiveSheet();
-  var ceta_range = event.source.getActiveRange();
-  Logger.log("ceta_spreadsheet = %s ceta_sheet = %s ceta_range = %s", ceta_spreadsheet, ceta_sheet, ceta_range)
+  var activeSheet = event.source.getActiveSheet();
+  var activeRange = event.source.getActiveRange();
+  Logger.log("activeSpreadsheet = %s activeSheet = %s activeRange = %s", activeSpreadsheet, activeSheet, activeRange)
 
   // get the cell thingy
-  var active_cell = ceta_sheet.getActiveCell();
-  var active_row = active_cell.getRow();
-  var active_column = active_cell.getColumn();
-  Logger.log("active_cell = %s active_row = %s active_column = %s", active_cell, active_row, active_column)
+  var activeCell = activeSheet.getActiveCell();
+  var activeRow = activeCell.getRow();
+  var activeColumn = activeCell.getColumn();
+  Logger.log("activeCell = %s activeRow = %s activeColumn = %s", activeCell, activeRow, activeColumn)
 
   // If header row then exit
-  if (active_row <= ROW_HEADER) {
-    Logger.log("active_row <= ROW_HEADER")
+  if (activeRow <= ROW_HEADER) {
+    Logger.log("activeRow <= ROW_HEADER")
     return;
   }
 
   // if not the db column get out
-  if (active_column != COLUMN_CHANGE_DATA_DOC_LINKS &&
-      active_column != COLUMN_CHANGE_DATA_ACTUAL_START &&
-      active_column != COLUMN_CHANGE_DATA_ACTUAL_END) {
-    Logger.log("active_column != COLUMN_CHANGE_DATA_CHANGE")
+  if (activeColumn != COLUMN_CHANGE_DATA_DOC_LINKS &&
+      activeColumn != COLUMN_CHANGE_DATA_ACTUAL_START &&
+      activeColumn != COLUMN_CHANGE_DATA_ACTUAL_END) {
+    Logger.log("activeColumn != COLUMN_CHANGE_DATA_CHANGE")
     return;
   }
 
   // get the revision
-  // var dataChangeKey = ceta_sheet.getRange(ROW_HEADER, active_column).getValue();
+  // var dataChangeKey = activeSheet.getRange(ROW_HEADER, activeColumn).getValue();
   // Logger.log("dataChangeKey = %s", dataChangeKey)
-  var dataChangeKey = active_column
+  var dataChangeKey = activeColumn
 
   // Get the changes in the cell
-  var dataChangeValue = ceta_sheet.getRange(active_row, active_column).getValue();
+  var dataChangeValue = activeSheet.getRange(activeRow, activeColumn).getValue();
   Logger.log("dataChangeValue = %s", dataChangeValue)
 
   // if its nothing then lets not bother (they're probably deleting stuff)
@@ -87,30 +87,30 @@ function ceta_db_column_edit(event){
   // get the logged in user (we can only get email I thinks)
   var activeUser = Session.getActiveUser();
   Logger.log("activeUser = %s", activeUser)
-  var current_user = activeUser.getEmail();
-  Logger.log("current_user = %s", current_user)
+  var currentUserEmail = activeUser.getEmail();
+  Logger.log("currentUserEmail = %s", currentUserEmail)
 
-  // check if can get current_user
-  if (current_user == EMPTY_STRING) {
+  // check if can get currentUserEmail
+  if (currentUserEmail == EMPTY_STRING) {
     // at least put something in
-    current_user = "An unknown user";
+    currentUserEmail = "UnknowEmail";
   }
 
   // get value
-  var storeName = ceta_sheet.getRange(active_row, COLUMN_STORE).getValue();
-  var storeId = ceta_sheet.getRange(active_row, COLUMN_STORE_ID).getValue();
-  var taskDescription = ceta_sheet.getRange(active_row, COLUMN_TASK_DESCRIPTION).getValue();
-  var assignedTo = ceta_sheet.getRange(active_row, COLUMN_ASSIGNED_TO).getValue()
-  var status = ceta_sheet.getRange(active_row, COLUMN_STATUS).getValue()
-  var planStart = Utilities.formatDate(ceta_sheet.getRange(active_row, COLUMN_PLAN_START).getValue(), TIME_ZONE, OUTPUT_DATE_FORMAT)
-  var planEnd = Utilities.formatDate(ceta_sheet.getRange(active_row, COLUMN_PLAN_END).getValue(), TIME_ZONE, OUTPUT_DATE_FORMAT)
+  var storeName = activeSheet.getRange(activeRow, COLUMN_STORE).getValue();
+  var storeId = activeSheet.getRange(activeRow, COLUMN_STORE_ID).getValue();
+  var taskDescription = activeSheet.getRange(activeRow, COLUMN_TASK_DESCRIPTION).getValue();
+  var assignedTo = activeSheet.getRange(activeRow, COLUMN_ASSIGNED_TO).getValue()
+  var status = activeSheet.getRange(activeRow, COLUMN_STATUS).getValue()
+  var planStart = Utilities.formatDate(activeSheet.getRange(activeRow, COLUMN_PLAN_START).getValue(), TIME_ZONE, OUTPUT_DATE_FORMAT)
+  var planEnd = Utilities.formatDate(activeSheet.getRange(activeRow, COLUMN_PLAN_END).getValue(), TIME_ZONE, OUTPUT_DATE_FORMAT)
 
   // sanity value
-  if (active_column == COLUMN_CHANGE_DATA_ACTUAL_START || active_column == COLUMN_CHANGE_DATA_ACTUAL_END) {
+  if (activeColumn == COLUMN_CHANGE_DATA_ACTUAL_START || activeColumn == COLUMN_CHANGE_DATA_ACTUAL_END) {
     dataChangeValue = Utilities.formatDate(dataChangeValue, TIME_ZONE, OUTPUT_DATE_FORMAT)
   }
 
-  saveChangesIntoCache(active_row, dataChangeKey, dataChangeValue, event.oldValue, storeName, storeId, taskDescription, assignedTo, status, planStart, planEnd)
+  saveChangesIntoCache(activeRow, dataChangeKey, dataChangeValue, event.oldValue, storeName, storeId, taskDescription, assignedTo, status, planStart, planEnd);
 }
 
 function checkCacheToSendToSlack(event) {
@@ -257,5 +257,6 @@ function saveChangesIntoCache(rowNumber, key, value, oldValue, storeName, storeI
   var changeRowsObjectStringify = JSON.stringify(changedRowsObject);
   Logger.log("changeRowsObjectStringify = %s", changeRowsObjectStringify);
 
+  // save into cache
   cache.put(CACHE_KEY, changeRowsObjectStringify);
 }
