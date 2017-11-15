@@ -9,16 +9,16 @@ var BOT_AVATAR = ":clock:"
 var ROW_HEADER = 4
 
 // COLUMN DATA CHANGE
-var COLUMN_CHANGE_DATA_DOC_LINKS = 7
-var COLUMN_CHANGE_DATA_ACTUAL_START = 12
-var COLUMN_CHANGE_DATA_ACTUAL_END = 13
+var COLUMN_CHANGE_DATA_DOC_LINKS = 6
+var COLUMN_CHANGE_DATA_ACTUAL_START = 11
+var COLUMN_CHANGE_DATA_ACTUAL_END = 12
 
 // COLUMN OUTPUT NAME
-var COLUMN_STORE = 15
+var COLUMN_STORE_ID = 1
+var COLUMN_STORE_NAME = 15
 var COLUMN_TASK_DESCRIPTION = 3
 var COLUMN_ASSIGNED_TO = 5
 var COLUMN_STATUS = 4
-var COLUMN_STORE_ID = 1
 var COLUMN_PLAN_START = 9
 var COLUMN_PLAN_END = 10
 
@@ -29,8 +29,8 @@ var OUTPUT_DATE_FORMAT = "dd/MM/yyyy"
 
 // Cache keys
 var CACHE_KEY = "changed-rows-t4" // change when want to invalidate clear old cache
-var KEY_STORE_NAME = "StoreName"
 var KEY_STORE_ID = "StoreID"
+var KEY_STORE_NAME = "StoreName"
 var KEY_TASK_DESCRIPTION = "TaskDescription"
 var KEY_ASSIGNED_TO = "AssignedTo"
 var KEY_STATUS = "Status"
@@ -49,7 +49,7 @@ function ceta_db_column_edit(event){
   var activeRange = event.source.getActiveRange();
   Logger.log("activeSpreadsheet = %s activeSheet = %s activeRange = %s", activeSpreadsheet, activeSheet, activeRange)
 
-  // get the cell thingy
+  // get the chaging cell
   var activeCell = activeSheet.getActiveCell();
   var activeRow = activeCell.getRow();
   var activeColumn = activeCell.getColumn();
@@ -97,7 +97,7 @@ function ceta_db_column_edit(event){
   }
 
   // get value
-  var storeName = activeSheet.getRange(activeRow, COLUMN_STORE).getValue();
+  var storeName = activeSheet.getRange(activeRow, COLUMN_STORE_NAME).getValue();
   var storeId = activeSheet.getRange(activeRow, COLUMN_STORE_ID).getValue();
   var taskDescription = activeSheet.getRange(activeRow, COLUMN_TASK_DESCRIPTION).getValue();
   var assignedTo = activeSheet.getRange(activeRow, COLUMN_ASSIGNED_TO).getValue()
